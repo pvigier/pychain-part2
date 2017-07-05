@@ -160,6 +160,7 @@ def display_deep_features(graph, X, Y):
         ax1.plot(x, y, 'o', label=str(i))
         ax2.scatter(x, y, z, c=c, label=str(i))
     plt.legend()
+    plt.title('Deep features')
     plt.show()
 
 if __name__ == '__main__':

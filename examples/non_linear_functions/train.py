@@ -10,13 +10,7 @@ from node import *
 from optimization_algorithm import *
 from datasets import *
 
-def visualize(graph, n, x1min=-0.5, x1max=1.5, x2min=-0.5, x2max=1.5):
-	dx1 = (x1max - x1min) / n
-	dx2 = (x2max - x2min) / n
-	X = np.resize(np.array([[[x1min+i*dx1, x2min+j*dx2] for i in range(n)] for j in range(n)]), (1, n*n, 2))
-	Y = np.resize(graph.propagate(X)[0], (n, n))
-	plt.imshow(Y, extent=[x1min, x1max, x2min, x2max], vmin=0, vmax=1, interpolation='none', origin='lower')
-	plt.colorbar()
+# Create the network
 
 def fully_connected(layers):
 	nodes = []
@@ -54,7 +48,33 @@ def fully_connected(layers):
 	cost_node = SigmoidCrossEntropyNode([(expected_output_node, 0), (cur_input_node, 0)])
 
 	nodes += [expected_output_node, cost_node]
-	return Graph(nodes, [input_node], [cur_input_node], [expected_output_node], cost_node, parameter_nodes)
+	return Graph(nodes, [input_node], [cur_input_node, nodes[-7]], [expected_output_node], cost_node, parameter_nodes)
+
+# Interpretation
+
+def visualize(graph, n, x1min=-0.5, x1max=1.5, x2min=-0.5, x2max=1.5):
+	dx1 = (x1max - x1min) / n
+	dx2 = (x2max - x2min) / n
+	X = np.resize(np.array([[[x1min+i*dx1, x2min+j*dx2] for i in range(n)] for j in range(n)]), (1, n*n, 2))
+	Y = np.resize(graph.propagate(X)[0], (n, n))
+	plt.imshow(Y, extent=[x1min, x1max, x2min, x2max], vmin=0, vmax=1, interpolation='none', origin='lower')
+	plt.colorbar()
+
+def display_deep_features(graph, X, Y):
+    # Compute the deep features
+    features = graph.propagate([X[:1000]])[1]
+    # PCA with 2 components
+    features -= np.mean(features, axis=0)
+    U, S, V = np.linalg.svd(features)
+    points = np.dot(features, V.T[:,:2])
+    # Plot points for each digit
+    for i in range(2):
+        x, y = points[Y == i,:].T
+        plt.plot(x, y, 'o', label=str(i))
+    plt.legend()
+    plt.title('Deep features')
+    plt.show()
+
 
 if __name__ == '__main__':
 	# XOR dataset
@@ -96,3 +116,5 @@ if __name__ == '__main__':
 	plt.ylabel('Cost')
 	plt.title('Network fully-connected {}'.format(layers))
 	plt.show()
+	# Display the deep features
+	display_deep_features(graph, X, Y.flatten())
