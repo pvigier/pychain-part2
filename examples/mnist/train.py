@@ -18,7 +18,7 @@ def shuffle_dataset(X, Y):
     p = np.random.permutation(X.shape[0])
     return X[p], Y[p]
 
-def normalized_dataset(X, mean=None):
+def preprocess_dataset(X, mean=None):
     mean_X = np.mean(X, axis=0) if mean is None else mean
     return (X - mean_X) / 255, mean_X
 
@@ -30,7 +30,7 @@ def one_hot_encode(Y):
 def init_function(shape):
     return np.random.rand(*shape)*0.2 - 0.1
 
-def fully_connected(layers):
+def create_fully_connected_network(layers):
     nodes = []
     parameter_nodes = []
 
@@ -60,7 +60,7 @@ def fully_connected(layers):
     # Expected output
     expected_output_node = InputNode()
     # Cost function
-    cost_node = SoftmaxCrossEntropyNode([(expected_output_node, 0), (cur_input_node, 0)])
+    cost_node = CategoricalCrossEntropyNode([(expected_output_node, 0), (cur_input_node, 0)])
 
     nodes += [expected_output_node, cost_node]
     return Graph(nodes, [input_node], [cur_input_node, nodes[-7]], [expected_output_node], cost_node, parameter_nodes) 
@@ -85,12 +85,13 @@ def train_and_monitor(monitor=True):
             i_batch += 1
             print('pass: {}/{}, batch: {}/{}, cost: {}'.format(i, nb_times_dataset, \
                     j // batch_size, X.shape[0] // batch_size, cost / batch_size))
-            if monitor and (i_batch  % 32) == 1:
+            if monitor and (i_batch % 256) == 1:
                 t.append(i_batch)
                 accuracies_training.append(accuracy(graph, X, Y))
                 accuracies_test.append(accuracy(graph, X_test, Y_test))
 
     print('duration:', time.time() - start_time)
+    print('accuracies: ', accuracies_test)
     # Plot the learning curves
     if monitor:
         plt.plot(t, accuracies_training, label='Training set')
@@ -114,6 +115,7 @@ def accuracy(graph, X, Y):
 # Visualization
 
 def visualize(graph, X, Y, mean, nb_samples=25):
+    plt.figure()
     images = (X[:nb_samples]*255 + mean).reshape(nb_samples, 28, 28)
     labels = Y[:nb_samples]
     for i, (image, label) in enumerate(zip(images, labels)):
@@ -124,9 +126,9 @@ def visualize(graph, X, Y, mean, nb_samples=25):
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
     plt.tight_layout()
-    plt.show()
 
 def display_weights(parameter_nodes, layers):
+    plt.figure()
     image_size = 28
     nb_images = layers[0]
     nb_columns = int(np.sqrt(nb_images))
@@ -137,11 +139,10 @@ def display_weights(parameter_nodes, layers):
         # Plot
         plt.subplot(nb_rows, nb_columns, i+1)
         plt.imshow(image, cmap='Greys', interpolation='none')
-        plt.title(str(i))
+        #plt.title(str(i))
         frame = plt.gca()
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
-    plt.show()
 
 def display_deep_features(graph, X, Y):
     fig = plt.figure()
@@ -161,19 +162,18 @@ def display_deep_features(graph, X, Y):
         ax2.scatter(x, y, z, c=c, label=str(i))
     plt.legend()
     plt.title('Deep features')
-    plt.show()
 
 if __name__ == '__main__':
     # Prepare dataset
     X, (nb_rows, nb_columns), Y = get_training_set('examples/mnist/mnist')
+    X, mean = preprocess_dataset(X)
     X, Y = shuffle_dataset(X, Y)
-    X, mean = normalized_dataset(X)
     Y = Y.reshape((len(Y), 1))
     ohe_Y = one_hot_encode(Y)
 
     X_test, (_, _), Y_test = get_test_set('examples/mnist/mnist')
+    X_test, _ = preprocess_dataset(X_test, mean)
     X_test, Y_test = shuffle_dataset(X_test, Y_test)
-    X_test, _ = normalized_dataset(X_test, mean)
     Y_test = Y_test.reshape((len(Y_test), 1))
 
     # Create the graph
@@ -181,12 +181,18 @@ if __name__ == '__main__':
     batch_size = 128
     learning_rate = 1
     nb_times_dataset = 1
-    graph = fully_connected(layers)
+    graph = create_fully_connected_network(layers)
 
     # Train
-    train_and_monitor(True)
+    train_and_monitor(False)
+
+    # Print final accuracy
+    print('final accuracy:', accuracy(graph, X_test, Y_test))
 
     # Interprete
-    visualize(graph, X, Y, mean)
+    """visualize(graph, X, Y, mean)
+    plt.show()
     display_weights(graph.get_parameter_nodes(), layers)
+    plt.show()
     display_deep_features(graph, X[:1000], Y[:1000].flatten())
+    plt.show()"""

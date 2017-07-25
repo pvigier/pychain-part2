@@ -161,15 +161,8 @@ def test_parameter_node():
 
 	assert np.array_equal(parameter_node.get_output(0), np.ones((3, 2)))
 	norm2_node.get_output(0)
-	parameter_node.get_gradient(0)
-	assert np.array_equal(parameter_node.acc_dJdw, 2*np.ones((3, 2)))
-
-	parameter_node.reset_memoization()
-	parameter_node.get_gradient(0)
-	assert np.array_equal(parameter_node.acc_dJdw, 4*np.ones((3, 2)))
-
-	parameter_node.reset_accumulator()
-	assert np.array_equal(parameter_node.acc_dJdw, np.zeros((3, 2)))
+	print(parameter_node.get_gradient(0))
+	assert np.array_equal(parameter_node.get_gradient(0), 2*np.ones((3, 2)))
 
 def test_addition_node():
 	node_in1 = InputNode(np.array([[1, 1], [2, 2], [3, 3]]))
@@ -234,10 +227,10 @@ def test_concatenate_node():
     assert np.array_equal(node_conca.get_gradient(0), np.array([[2, 2], [4, 4]]))
     assert np.array_equal(node_conca.get_gradient(1), np.array([[2, 4], [6, 8]]))
  
-def test_softmax_cross_entropy_node():
+def test_categorical_cross_entropy_node():
 	node_in1 = InputNode(np.array([[1, 1], [2, 2]]))
 	node_in2 = InputNode(np.array([[1, 2], [3, 4]]))
-	node_sce = SoftmaxCrossEntropyNode([(node_in1, 0), (node_in2, 0)])
+	node_sce = CategoricalCrossEntropyNode([(node_in1, 0), (node_in2, 0)])
 	node_out = GradientNode([(node_sce, 0)])
 
 	assert node_sce.get_output(0) == - (0 + np.log(2) + 2*np.log(3) + 2*np.log(4))
@@ -245,10 +238,10 @@ def test_softmax_cross_entropy_node():
 	assert np.array_equal(node_sce.get_gradient(0), np.array([[0, -np.log(2)], [-np.log(3), -np.log(4)]]))
 	assert np.array_equal(node_sce.get_gradient(1), -np.array([[1, 1/2], [2/3, 2/4]]))
 
-def test_sigmoid_cross_entropy_node():
+def test_binary_cross_entropy_node():
 	node_in1 = InputNode(np.array([[1, 0], [0.5, 0.7]]))
 	node_in2 = InputNode(np.array([[0.9, 0.3], [0.4, 0.8]]))
-	node_sce = SigmoidCrossEntropyNode([(node_in1, 0), (node_in2, 0)])
+	node_sce = BinaryCrossEntropyNode([(node_in1, 0), (node_in2, 0)])
 	node_out = GradientNode([(node_sce, 0)])
 
 	y = -np.log(0.9) - np.log(0.7) - (0.5*np.log(0.4)+0.5*np.log(0.6)) - (0.7*np.log(0.8)+0.3*np.log(0.2))

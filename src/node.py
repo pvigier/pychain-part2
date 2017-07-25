@@ -70,23 +70,18 @@ class InputNode(Node):
         return self.value
 
     def compute_gradient(self):
-        return self.dJdy
+        return [self.dJdy[0]]
 
 class ParameterNode(Node):
     def __init__(self, w):
         Node.__init__(self)
         self.w = w
-        self.acc_dJdw = np.zeros(self.w.shape)
 
     def compute_output(self):
         return [self.w]
 
     def compute_gradient(self):
-        self.acc_dJdw += self.dJdy[0]
-        return self.dJdy
-
-    def reset_accumulator(self):
-        self.acc_dJdw.fill(0)
+        return [self.dJdy[0]]
 
 class GradientNode(Node):
     def __init__(self, parents, value=1):
@@ -97,7 +92,7 @@ class GradientNode(Node):
         self.value = value
 
     def compute_output(self):
-        return self.x
+        return [self.x[0]]
 
     def get_gradient(self, i_input):
         return self.value
@@ -164,9 +159,6 @@ class ScalarMultiplicationNode(Node):
     def compute_gradient(self):
         return [self.scalar * self.dJdy[0]]
 
-    def clone(self):
-        return ScalarMultiplicationNode(None, scalar=self.scalar)
-
 class Norm2Node(Node):
     def compute_output(self):
         return [np.sum(np.square(self.x[0]))]
@@ -187,9 +179,6 @@ class SelectionNode(Node):
         gradient = np.zeros(self.x[0].shape)
         gradient[:,self.start:self.end] = self.dJdy[0]
         return [gradient]
-
-    def clone(self):
-        return SelectionNode(None, start=self.start, end=self.end)
 
 class AdditionNode(Node):
     def compute_output(self):
@@ -220,14 +209,14 @@ class EWMultiplicationNode(Node):
     def compute_gradient(self):
         return [self.dJdy[0]*self.x[1], self.dJdy[0]*self.x[0]]
 
-class SoftmaxCrossEntropyNode(Node):
+class CategoricalCrossEntropyNode(Node):
     def compute_output(self):
         return [-np.sum(self.x[0]*np.log(self.x[1]))]
 
     def compute_gradient(self):
         return [-self.dJdy[0]*np.log(self.x[1]), -self.dJdy[0]*(self.x[0]/self.x[1])]
 
-class SigmoidCrossEntropyNode(Node):
+class BinaryCrossEntropyNode(Node):
     def compute_output(self):
         return [-np.sum((self.x[0]*np.log(self.x[1]) + (1-self.x[0])*np.log(1-self.x[1])))]
 
