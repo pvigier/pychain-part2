@@ -121,7 +121,7 @@ def visualize(graph, X, Y, mean, nb_samples=25):
     for i, (image, label) in enumerate(zip(images, labels)):
         plt.subplot(5, 5, i+1)
         plt.imshow(image, cmap='Greys', vmin=0, vmax=255, interpolation='none')
-        plt.title(str(get_predicted_class(graph.propagate([X[i:i+1]])[0]))+ ' ' + str(labels[i]))
+        plt.title(str(get_predicted_class(graph.propagate([X[i:i+1]])[0])[0])+ ' ' + str(labels[i]))
         frame = plt.gca()
         frame.axes.get_xaxis().set_visible(False)
         frame.axes.get_yaxis().set_visible(False)
@@ -150,17 +150,16 @@ def display_deep_features(graph, X, Y):
     ax2 = fig.add_subplot(122, projection='3d')
 
     # Compute the deep features
-    features = graph.propagate([X[:1000]])[1]
+    features = graph.propagate([X])[1]
     # PCA with 3 components
     features -= np.mean(features, axis=0)
     U, S, V = np.linalg.svd(features)
     points = np.dot(features, V.T[:,:3])
     # Plot points for each digit
-    for i, c in zip(range(10), ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'pink', 'coral', 'indigo']):
+    for i in range(10):
         x, y, z = points[Y == i,:].T
         ax1.plot(x, y, 'o', label=str(i))
-        ax2.scatter(x, y, z, c=c, label=str(i))
-    plt.legend()
+        ax2.scatter(x, y, z, label=str(i))
     plt.title('Deep features')
 
 if __name__ == '__main__':
@@ -190,9 +189,9 @@ if __name__ == '__main__':
     print('final accuracy:', accuracy(graph, X_test, Y_test))
 
     # Interprete
-    """visualize(graph, X, Y, mean)
+    visualize(graph, X, Y, mean)
     plt.show()
     display_weights(graph.get_parameter_nodes(), layers)
     plt.show()
     display_deep_features(graph, X[:1000], Y[:1000].flatten())
-    plt.show()"""
+    plt.show()

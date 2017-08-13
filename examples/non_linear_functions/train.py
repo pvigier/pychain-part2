@@ -66,7 +66,7 @@ def visualize(graph, n, x1_min=-0.5, x1_max=1.5, x2_min=-0.5, x2_max=1.5):
 def display_deep_features(graph, X, Y):
     plt.figure()
     # Compute the deep features
-    features = graph.propagate([X[:1000]])[1]
+    features = graph.propagate([X])[1]
     # PCA with 2 components
     features -= np.mean(features, axis=0)
     U, S, V = np.linalg.svd(features)
